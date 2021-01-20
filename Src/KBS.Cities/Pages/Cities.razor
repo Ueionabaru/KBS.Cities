@@ -1,0 +1,174 @@
+﻿@page "/"
+@implements IAsyncDisposable
+
+@using KBS.Cities.Shared.DTO
+@using Microsoft.AspNetCore.SignalR.Client
+@using KBS.Cities.Components
+@using Microsoft.AspNetCore.WebUtilities
+@using static Shared.Constants
+
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IToastService ToastService
+
+<div class="container text-center">
+    <h1>Cities</h1>
+
+    <p>This component fetches data from the server.</p>
+</div>
+
+@if (_data == null)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row pb-2">
+        <button @onclick="Create" class="btn btn-primary">
+            <span class="@OpenIconic.Plus"></span>
+        </button>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Population</th>
+                <th>Established</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var city in _data.Data)
+            {
+                <tr>
+                    <td>@city.Name</td>
+                    <td>@city.Population</td>
+                    <td>@city.Established.ToShortDateString()</td>
+                    <td>
+                        <button @onclick="@(async() => await Edit(city.Id, city.Name))" class="btn btn-primary">
+                            <span class="@OpenIconic.Pencil"></span>
+                        </button>
+                        <button @onclick="@(async() => await Delete(city.Id, city.Name))" class="btn btn-danger">
+                            <span class="@OpenIconic.X"></span>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(_data.HasPreviousPage ? string.Empty : Markup.Disabled)">
+            <button class="page-link" disabled="@(!_data.HasPreviousPage)" @onclick="CallPreviousPage">
+                <span class="oi oi-arrow-left"></span>
+            </button>
+        </li>
+        @for (var i = 1; i <= _data.TotalPages; i++)
+        {
+            var pageIndex = i;
+            <li id="prevButton" class="page-item @(pageIndex == _data.PageIndex ? Markup.Active : string.Empty)">
+                <button @onclick="@(() => CallChangePage(pageIndex))" class="page-link">@pageIndex</button>
+            </li>
+        }
+        <li class="page-item @(_data.HasNextPage ? string.Empty : Markup.Disabled)">
+            <button id="nextButton" disabled="@(!_data.HasNextPage)" class="page-link" @onclick="CallNextPage">
+                <span class="oi oi-arrow-right"></span>
+            </button>
+        </li>
+    </ul>
+}
+
+@code {
+    private PaginatedDto<CityDto> _data;
+    private int _index = 1;
+    private HubConnection _hub;
+
+    [CascadingParameter] public IModalService Modal { get; set; }
+
+    private bool IsConnected => _hub.State == HubConnectionState.Connected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetQueryValues();
+        await ConnectToHubAsync();
+        await LoadPaginated();
+    }
+
+    private void GetQueryValues()
+    {
+        var uri = new Uri(NavigationManager.Uri).Query;
+        if (QueryHelpers.ParseQuery(uri).TryGetValue("index", out var indexValue)) int.TryParse(indexValue, out _index);
+        if (_index <= 0) _index = 1;
+    }
+
+    private async Task ConnectToHubAsync()
+    {
+        _hub = new HubConnectionBuilder()
+            .WithUrl(City.Hub)
+            .Build();
+        _hub.On(City.Updated, CallLoadPaginated);
+        await _hub.StartAsync();
+    }
+
+    private async Task UpdateCities() => await _hub.SendAsync(City.Update);
+
+    private void CallPreviousPage() => Task.Run(async () => await ChangePage(_index - 1));
+    private void CallNextPage() => Task.Run(async () => await ChangePage(_index + 1));
+    private void CallChangePage(int index) => Task.Run(async () => await ChangePage(index));
+    private void CallLoadPaginated() => Task.Run(async () => await LoadPaginated());
+
+    private async Task ChangePage(int index)
+    {
+        Console.WriteLine(index);
+        _index = index;
+        await LoadPaginated();
+    }
+
+    private async Task LoadPaginated()
+    {
+        var queryString = new PaginationFiltersDto { PageIndex = _index }.ToQueryString();
+        var response = await Http.GetAsync($"{City.EndPoint}{queryString}");
+        if (response.IsSuccessStatusCode) _data = await response.Content.ReadFromJsonAsync<PaginatedDto<CityDto>>();
+        else _data ??= new PaginatedDto<CityDto>();
+        StateHasChanged();
+    }
+
+    private async Task Create()
+    {
+        var form = Modal.Show<CityModal>(City.New);
+        await PostChange(form);
+    }
+
+    private async Task Edit(Guid id, string name)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(CityDto.Id), id);
+
+        var form = Modal.Show<CityModal>(name, parameters);
+        await PostChange(form);
+    }
+
+    private async Task Delete(Guid id, string name)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(CityDto.Id), id);
+
+        var form = Modal.Show<DeleteConfirmationModal>($"Delete {name}", parameters);
+        await PostChange(form);
+    }
+
+    private async Task PostChange(IModalReference form)
+    {
+        var result = await form.Result;
+        if (IsConnected && !result.Cancelled)
+        {
+            await UpdateCities();
+            ToastService.ShowSuccess(Toast.Ok);
+        }
+    }
+
+    public async ValueTask DisposeAsync() => await _hub.DisposeAsync();
+}

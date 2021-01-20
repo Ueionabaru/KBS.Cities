@@ -1,0 +1,52 @@
+﻿@using System.Net
+@using static Shared.Constants
+@inject IToastService ToastService
+
+<div style="width: 520px">
+    <p>Are you sure you want to delete this city?</p>
+    <hr />
+    <button class="btn btn-primary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)" 
+            disabled="@(_isProcessing)" 
+            @onclick="CallConfirm">
+        @if (_isProcessing)
+        {
+            <span class="spinner-border spinner-border-sm"></span>
+            <span> Loading..</span>
+        }
+        else
+        {
+            <span>Confirm</span>
+        }
+    </button>
+    <button class="btn btn-secondary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)" 
+            disabled="@(_isProcessing)" 
+            @onclick="CallCancel">Cancel</button>
+</div>
+
+@code {
+    [CascadingParameter] private BlazoredModalInstance ModalInstance { get; set; }
+
+    [Inject] public HttpClient Client { get; set; }
+
+    [Parameter] public Guid Id { private get; set; }
+
+    private bool _isProcessing;
+
+    private void CallConfirm() => Task.Run(async () => await Confirm());
+    private void CallCancel() => Task.Run(async () => await ModalInstance.CancelAsync());
+
+    private async Task Confirm()
+    {
+        _isProcessing = true;
+        StateHasChanged();
+
+        var response = await Client.DeleteAsync($"{City.EndPoint}/{Id}");
+        if (response.IsSuccessStatusCode) await ModalInstance.CloseAsync();
+        
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            ToastService.ShowError("City is not found", Toast.NotFound);
+            await ModalInstance.CancelAsync();
+        }
+    }
+}

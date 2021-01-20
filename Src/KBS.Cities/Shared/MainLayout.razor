@@ -1,0 +1,25 @@
+﻿@using Blazored.Toast.Configuration
+@inherits LayoutComponentBase
+
+<div class="page">
+
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4">
+            <a href="https://github.com/Ueionabaru" target="_blank" class="ml-md-auto">About</a>
+        </div>
+
+        <div class="content px-4">
+            <BlazoredToasts Position="ToastPosition.TopRight"
+                            Timeout="3"
+                            IconType="IconType.FontAwesome"
+                            SuccessClass="success-toast-override"
+                            ErrorIcon="@Constants.OpenIconic.X"
+                            SuccessIcon="@Constants.OpenIconic.Check" />
+            @Body
+        </div>
+    </div>
+</div>
