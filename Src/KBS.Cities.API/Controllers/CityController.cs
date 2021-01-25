@@ -2,7 +2,6 @@
 using KBS.Cities.Shared.DTO;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
 
@@ -14,13 +13,16 @@ namespace KBS.Cities.API.Controllers
     {
         private IMediator _mediator;
 
-        protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+        public CityController(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
 
         [HttpGet, Route("")]
-        public async Task<IActionResult> GetPaginatedAsync([FromQuery] PaginationFiltersDto filtersDto)
+        public async Task<IActionResult> GetPaginatedAsync([FromQuery] CityPaginationFilterDto filterDto)
         {
-            var request = new GetPaginatedRequest { Filters = filtersDto };
-            var response = await Mediator.Send(request);
+            var request = new GetPaginatedRequest { Filter = filterDto };
+            var response = await _mediator.Send(request);
             return Ok(response);
         }
 
@@ -28,7 +30,7 @@ namespace KBS.Cities.API.Controllers
         public async Task<IActionResult> GetDetailsAsync([FromRoute] Guid? id = null)
         {
             var request = new GetDetailsRequest { Id = id ?? Guid.Empty };
-            return Ok(await Mediator.Send(request));
+            return Ok(await _mediator.Send(request));
         }
 
         [HttpPost, Route("")]
@@ -39,7 +41,7 @@ namespace KBS.Cities.API.Controllers
                 Id = Guid.Empty,
                 Data = dto
             };
-            await Mediator.Send(request);
+            await _mediator.Send(request);
             return NoContent();
         }
 
@@ -51,7 +53,7 @@ namespace KBS.Cities.API.Controllers
                 Id = id,
                 Data = dto
             };
-            await Mediator.Send(request);
+            await _mediator.Send(request);
             return NoContent();
         }
 
@@ -59,7 +61,7 @@ namespace KBS.Cities.API.Controllers
         public async Task<IActionResult> Remove([FromRoute] Guid id)
         {
             var request = new DeleteRequest { Id = id };
-            await Mediator.Send(request);
+            await _mediator.Send(request);
             return NoContent();
         }
     }

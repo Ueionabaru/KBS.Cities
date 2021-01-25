@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using AutoMapper;
+using FluentValidation;
 using KBS.Cities.Application.Behaviors;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,8 +11,11 @@ namespace KBS.Cities.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
-            services.AddMediatR(Assembly.GetExecutingAssembly());
+            var execAssembly = Assembly.GetExecutingAssembly();
+
+            services.AddValidatorsFromAssembly(execAssembly);
+            services.AddAutoMapper(execAssembly);
+            services.AddMediatR(execAssembly);
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             return services;
         }

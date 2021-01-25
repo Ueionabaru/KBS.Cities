@@ -30,6 +30,16 @@ namespace KBS.Cities.Persistence.Extensions
                 new() {Name = "Shchuchye", Population = 10_973, Established = new DateTime(1750, 1, 1)},
                 new() {Name = "Vargashi", Population = 9_254, Established = new DateTime(1894, 1, 1)},
                 new() {Name = "Kargapolye", Population = 8_433, Established = new DateTime(1821, 1, 1)},
+                new() {Name = "Yekaterinburg", Population = 1_349_772, Established = new DateTime(1796, 11, 18)},
+                new() {Name = "Nizhny Tagil", Population = 349_008, Established = new DateTime(1722, 10, 1)},
+                new() {Name = "Kamensk-Uralsky", Population = 174_689, Established = new DateTime(1701, 1, 1)},
+                new() {Name = "Pervouralsk", Population = 124_528, Established = new DateTime(1732, 1, 1)},
+                new() {Name = "Serov", Population = 99_373, Established = new DateTime(1893, 1, 1)},
+                new() {Name = "Novouralsk", Population = 85_522, Established = new DateTime(1941, 1, 1)},
+                new() {Name = "Verkhnyaya Pyshma", Population = 59_749, Established = new DateTime(1660, 1, 1)},
+                new() {Name = "Asbest", Population = 68_893, Established = new DateTime(1889, 1, 1)},
+                new() {Name = "Revda", Population = 61_875, Established = new DateTime(1734, 1, 1)},
+                new() {Name = "Polevskoy", Population = 64_220, Established = new DateTime(1821, 1, 1)}
             });
             context.SaveChangesAsync();
 

@@ -7,7 +7,7 @@ namespace KBS.Cities.API.Hubs
     {
         public async Task UpdateCities()
         {
-            await Clients.All.SendAsync("CitiesUpdated");
+            await Clients.AllExcept(Context.ConnectionId).SendAsync("CitiesUpdated");
         }
     }
 }
