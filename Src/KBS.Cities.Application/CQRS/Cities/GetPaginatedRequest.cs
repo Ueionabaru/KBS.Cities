@@ -30,15 +30,17 @@ namespace KBS.Cities.Application.CQRS.Cities
 
             public async Task<PaginatedDto<CityDto>> Handle(GetPaginatedRequest request, CancellationToken cancellationToken = default)
             {
-                var filter = request.Filter;
+                var filter = request.Filter ?? new CityPaginationFilterDto();
                 var query = _appDbContext.Set<City>().Where(_ => true);
+
+                query = OrderQuery(query, filter);
+                query = FilterQuery(query, filter);
+
                 var total = await query.CountAsync(cancellationToken);
 
                 var totalPages = (int)Math.Ceiling(total / (double)filter.PageSize);
                 if (filter.PageIndex > totalPages) filter.PageIndex = totalPages;
 
-                query = OrderQuery(query, filter);
-                query = FilterQuery(query, filter);
                 query = PaginateQuery(query, filter);
 
                 var cities = await query.Select(c => new City
@@ -73,9 +75,9 @@ namespace KBS.Cities.Application.CQRS.Cities
                     },
                     OrderDirection.Descending => filter.OrderBy switch
                     {
-                        nameof(City.Name) => query.OrderBy(c => c.Name),
-                        nameof(City.Population) => query.OrderBy(c => c.Population),
-                        nameof(City.Established) => query.OrderBy(c => c.Established),
+                        nameof(City.Name) => query.OrderByDescending(c => c.Name),
+                        nameof(City.Population) => query.OrderByDescending(c => c.Population),
+                        nameof(City.Established) => query.OrderByDescending(c => c.Established),
                         _ => query
                     },
                     _ => throw new ArgumentOutOfRangeException(nameof(OrderDirection))
@@ -86,7 +88,7 @@ namespace KBS.Cities.Application.CQRS.Cities
             private static IQueryable<City> FilterQuery(IQueryable<City> query, CityPaginationFilterDto filter)
             {
                 if (!string.IsNullOrEmpty(filter.Name))
-                    query = query.Where(c => c.Name != null);
+                    query = query.Where(c => c.Name.Contains(filter.Name, StringComparison.InvariantCultureIgnoreCase));
 
                 if (filter.PopulationFrom != int.MaxValue)
                     query = query.Where(c => c.Population >= filter.PopulationFrom);

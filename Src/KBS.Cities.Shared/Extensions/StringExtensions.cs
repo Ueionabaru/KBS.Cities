@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Text;
 
-namespace KBS.Cities.Shared
+namespace KBS.Cities.Shared.Extensions
 {
-    public static class Extensions
+    public static class StringExtensions
     {
         public static string ToQueryString(this object obj)
         {
@@ -23,12 +23,10 @@ namespace KBS.Cities.Shared
 
                 qs.Append($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(value)}&");
             }
-            return qs.ToString();
-        }
 
-        public static bool LessThan(this int value, int num)
-        {
-            return value < num;
+            qs.Length--;
+
+            return qs.ToString();
         }
     }
 }

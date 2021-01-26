@@ -9,5 +9,6 @@ namespace KBS.Cities.Shared.DTO
         public int PopulationTo { get; set; } = int.MaxValue;
         public DateTime DateFrom { get; set; } = DateTime.MinValue;
         public DateTime DateTo { get; set; } = DateTime.MaxValue;
+        public override string OrderBy { get; set; } = nameof(CityDto.Population);
     }
 }

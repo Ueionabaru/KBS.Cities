@@ -4,7 +4,7 @@ namespace KBS.Cities.Shared.DTO
 {
     public class FilterDto
     {
-        public string OrderBy { get; set; } = nameof(CityDto.Population);
-        public OrderDirection OrderDirection { get; set; } = OrderDirection.Descending;
+        public virtual string OrderBy { get; set; } = string.Empty;
+        public virtual OrderDirection OrderDirection { get; set; } = OrderDirection.Descending;
     }
 }

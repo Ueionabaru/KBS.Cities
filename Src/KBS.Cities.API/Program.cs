@@ -1,4 +1,3 @@
-using System;
 using KBS.Cities.Persistence;
 using KBS.Cities.Persistence.Extensions;
 using Microsoft.AspNetCore.Hosting;
@@ -6,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System;
 
 namespace KBS.Cities.API
 {

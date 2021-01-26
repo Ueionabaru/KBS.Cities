@@ -4,6 +4,7 @@
 @using KBS.Cities.Shared.DTO
 @using Microsoft.AspNetCore.SignalR.Client
 @using KBS.Cities.Components
+@using KBS.Cities.Shared.Extensions
 @using Microsoft.AspNetCore.WebUtilities
 @using static Shared.Constants
 
@@ -21,80 +22,79 @@
 }
 else
 {
-    <div class="container">
-
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <div class="row">
-                    <div class="col col-xs-6">
-                        <h3 class="panel-title">Cities</h3>
-                    </div>
-                    <div class="col col-xs-6 text-right">
-                        <button type="button" class="btn btn-sm btn-primary btn-create" @onclick="Create"><span class="@OpenIconic.Plus"></span> Create New</button>
-                        <button type="button" class="btn btn-sm btn-primary btn-create disabled" disabled @onclick="Create"><span class="oi oi-tags"></span> Filters</button>
-                    </div>
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title p-2">Cities</h4>
+            <div class="row">
+                <div class="col col-lg-6">
+                    <p class="card-description"> Basic table with card </p>
                 </div>
-            </div>
-
-            <div class="panel-body">
-                <table class="table table-hover" data-search="true">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th width="140">Population</th>
-                            <th width="120">Established</th>
-                            <th width="100">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var city in _data.Data)
-                        {
-                            <tr>
-                                <td>@city.Name</td>
-                                <td width="140">
-                                    <span class="@GetPopulationLabelColor(city.Population)">@city.Population</span>
-                                </td>
-                                <td width="120">@city.Established.ToShortDateString()</td>
-                                <td width="100">
-                                    <button @onclick="@(async() => await Edit(city.Id, city.Name))" class="btn btn-sm bg-primary-lt">
-                                        <span class="@OpenIconic.Pencil"></span>
-                                    </button>
-                                    <button @onclick="@(async() => await Delete(city.Id, city.Name))" class="btn btn-sm bg-danger-lt">
-                                        <span class="@OpenIconic.X"></span>
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="panel-footer">
-                <div class="row">
-                    <div class="col col-xs-4">
-                        Page @_data.PageIndex of @_data.TotalPages
-                    </div>
-                    <div class="col col-xs-8">
-                        <ul class="pagination justify-content-end">
-                            <li class="page-item @(_data.HasPreviousPage ? string.Empty : Markup.Disabled)">
-                                <button class="btn btn-sm page-link" disabled="@(!_data.HasPreviousPage)" @onclick="CallPreviousPage">Previous</button>
-                            </li>
-                            @for (var i = 1; i <= _data.TotalPages; i++)
-                            {
-                                var pageIndex = i;
-                                <li id="prevButton" class="page-item @(pageIndex == _data.PageIndex ? Markup.Active : string.Empty)">
-                                    <button @onclick="@(() => CallChangePage(pageIndex))" class="btn btn-sm page-link">@pageIndex</button>
-                                </li>
-                            }
-                            <li class="page-item @(_data.HasNextPage ? string.Empty : Markup.Disabled)">
-                                <button id="nextButton" disabled="@(!_data.HasNextPage)" class="btn btn-sm page-link" @onclick="CallNextPage">Next</button>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="col col-lg-6 text-right">
+                    <button type="button" class="btn btn-sm btn-primary btn-create" @onclick="Create"><span class="@OpenIconic.Plus"></span> Create New</button>
+                    <button type="button" class="btn btn-sm btn-primary btn-create disabled" disabled @onclick="Create"><span class="oi oi-tags"></span> Filters</button>
                 </div>
             </div>
         </div>
 
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th width="140">Population</th>
+                        <th width="120">Established</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var city in _data.Data)
+                    {
+                    <tr>
+                        <td>
+                            @city.Name
+                        </td>
+                        <td width="140">
+                            <span class="@GetPopulationLabelColor(city.Population)">@city.Population</span>
+                        </td>
+                        <td width="120">@city.Established.ToShortDateString()</td>
+                        <td width="100">
+                            <button @onclick="@(async() => await Edit(city.Id, city.Name))" class="btn btn-sm bg-primary-lt">
+                                <span class="@OpenIconic.Pencil"></span>
+                            </button>
+                            <button @onclick="@(async() => await Delete(city.Id, city.Name))" class="btn btn-sm bg-danger-lt">
+                                <span class="@OpenIconic.X"></span>
+                            </button>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer">
+            <div class="d-flex row">
+                <div class="col col-xs-4">
+                    Page @_data.PageIndex of @_data.TotalPages
+                </div>
+                <div class="col col-xs-8">
+                    <ul class="pagination justify-content-end">
+                        <li class="page-item @(_data.HasPreviousPage ? string.Empty : Markup.Disabled)">
+                            <button class="btn btn-sm page-link" disabled="@(!_data.HasPreviousPage)" @onclick="CallPreviousPage">Previous</button>
+                        </li>
+                        @for (var i = 1; i <= _data.TotalPages; i++)
+                        {
+                            var pageIndex = i;
+                            <li id="prevButton" class="page-item @(pageIndex == _data.PageIndex ? Markup.Active : string.Empty)">
+                                <button @onclick="@(() => CallChangePage(pageIndex))" class="btn btn-sm page-link">@pageIndex</button>
+                            </li>
+                        }
+                        <li class="page-item @(_data.HasNextPage ? string.Empty : Markup.Disabled)">
+                            <button id="nextButton" disabled="@(!_data.HasNextPage)" class="btn btn-sm page-link" @onclick="CallNextPage">Next</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
