@@ -13,11 +13,11 @@ using System.Threading.Tasks;
 
 namespace KBS.Cities.Application.CQRS.Cities
 {
-    public class GetPaginatedRequest : IRequest<PaginatedDto<CityDto>>
+    public class GetPaginatedRequest : IRequest<PaginatedDto<CityDto, CityPaginationFilterDto>>
     {
         public CityPaginationFilterDto Filter { get; set; }
 
-        public class GetPaginatedRequestHandler : IRequestHandler<GetPaginatedRequest, PaginatedDto<CityDto>>
+        public class GetPaginatedRequestHandler : IRequestHandler<GetPaginatedRequest, PaginatedDto<CityDto, CityPaginationFilterDto>>
         {
             private readonly IDbContext _appDbContext;
             private readonly IMapper _mapper;
@@ -28,7 +28,7 @@ namespace KBS.Cities.Application.CQRS.Cities
                 _mapper = mapper;
             }
 
-            public async Task<PaginatedDto<CityDto>> Handle(GetPaginatedRequest request, CancellationToken cancellationToken = default)
+            public async Task<PaginatedDto<CityDto, CityPaginationFilterDto>> Handle(GetPaginatedRequest request, CancellationToken cancellationToken = default)
             {
                 var filter = request.Filter ?? new CityPaginationFilterDto();
                 var query = _appDbContext.Set<City>().Where(_ => true);
@@ -52,10 +52,11 @@ namespace KBS.Cities.Application.CQRS.Cities
                     })
                     .ToListAsync(cancellationToken);
 
-                var data = _mapper.Map<List<CityDto>>(cities);
-                return new PaginatedDto<CityDto>
+                var items = _mapper.Map<List<CityDto>>(cities);
+                return new PaginatedDto<CityDto, CityPaginationFilterDto>
                 {
-                    Data = data,
+                    Items = items,
+                    Filter = filter,
                     TotalItems = total,
                     PageIndex = filter.PageIndex,
                     PageSize = filter.PageSize
@@ -105,7 +106,7 @@ namespace KBS.Cities.Application.CQRS.Cities
                 return query;
             }
 
-            private static IQueryable<City> PaginateQuery(IQueryable<City> query, PaginationFilterDto filters)
+            private static IQueryable<City> PaginateQuery(IQueryable<City> query, PaginationFilterDto<CityDto> filters)
             {
                 query = query
                     .Skip((filters.PageIndex - 1) * filters.PageSize)

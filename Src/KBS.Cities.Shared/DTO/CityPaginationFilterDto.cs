@@ -2,7 +2,7 @@
 
 namespace KBS.Cities.Shared.DTO
 {
-    public class CityPaginationFilterDto : PaginationFilterDto
+    public class CityPaginationFilterDto : PaginationFilterDto<CityDto>
     {
         public string Name { get; set; } = string.Empty;
         public int PopulationFrom { get; set; } = int.MinValue;

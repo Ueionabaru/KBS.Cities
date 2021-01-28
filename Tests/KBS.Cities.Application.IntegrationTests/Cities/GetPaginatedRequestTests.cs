@@ -27,7 +27,7 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             result.PageIndex.Should().Be(defaultPageIndex, $"{defaultPageIndex} is default page number for an empty request.");
             result.PageSize.Should().Be(defaultPageSize, $"{defaultPageSize} is default page size for an empty request.");
             result.TotalItems.Should().Be(expectedTotalItemsCount);
-            result.Data.Should().BeInDescendingOrder(c => c.Population);
+            result.Items.Should().BeInDescendingOrder(c => c.Population);
         }
 
         [Test]
@@ -65,13 +65,13 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             switch (orderBy)
             {
                 case nameof(CityDto.Name):
-                    result.Data.Should().BeInAscendingOrder(c => c.Name);
+                    result.Items.Should().BeInAscendingOrder(c => c.Name);
                     break;
                 case nameof(CityDto.Population):
-                    result.Data.Should().BeInAscendingOrder(c => c.Population);
+                    result.Items.Should().BeInAscendingOrder(c => c.Population);
                     break;
                 case nameof(CityDto.Established):
-                    result.Data.Should().BeInAscendingOrder(c => c.Established);
+                    result.Items.Should().BeInAscendingOrder(c => c.Established);
                     break;
             }
         }
@@ -93,13 +93,13 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             switch (orderBy)
             {
                 case nameof(CityDto.Name):
-                    result.Data.Should().BeInDescendingOrder(c => c.Name);
+                    result.Items.Should().BeInDescendingOrder(c => c.Name);
                     break;
                 case nameof(CityDto.Population):
-                    result.Data.Should().BeInDescendingOrder(c => c.Population);
+                    result.Items.Should().BeInDescendingOrder(c => c.Population);
                     break;
                 case nameof(CityDto.Established):
-                    result.Data.Should().BeInDescendingOrder(c => c.Established);
+                    result.Items.Should().BeInDescendingOrder(c => c.Established);
                     break;
             }
         }
@@ -120,7 +120,7 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             var result = await ArrangeAndAct(filter);
 
             // Assert
-            result.Data.ForEach(c =>
+            result.Items.ForEach(c =>
             {
                 c.Established.Should().BeOnOrAfter(after);
                 c.Established.Should().BeOnOrBefore(before);
@@ -135,7 +135,7 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             var result = await ArrangeAndAct(filter);
 
             // Assert
-            result.Data.ForEach(c =>
+            result.Items.ForEach(c =>
             {
                 c.Name.ToLowerInvariant().Should().Contain(namePart.ToLowerInvariant());
             });
@@ -154,7 +154,7 @@ namespace KBS.Cities.Application.IntegrationTests.Cities
             var result = await ArrangeAndAct(filter);
 
             // Assert
-            result.Data.ForEach(c =>
+            result.Items.ForEach(c =>
             {
                 c.Population.Should().BeGreaterOrEqualTo(populationFrom);
                 c.Population.Should().BeLessThan(populationTo);

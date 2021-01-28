@@ -96,7 +96,11 @@
             : await Http.PutAsync($"{City.EndPoint}/{Id}", content);
 
         if (response.IsSuccessStatusCode)
-            await ModalInstance.CloseAsync();
+        {
+            var data = await response.Content.ReadFromJsonAsync<CityDto>();
+            var result = ModalResult.Ok(data, typeof(CityDto));
+            await ModalInstance.CloseAsync(result);
+        }
 
         switch (response.StatusCode)
         {

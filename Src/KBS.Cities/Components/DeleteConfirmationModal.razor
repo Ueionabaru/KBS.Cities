@@ -5,8 +5,8 @@
 <div style="width: 520px">
     <p>Are you sure you want to delete this city?</p>
     <hr />
-    <button class="btn btn-primary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)" 
-            disabled="@(_isProcessing)" 
+    <button class="btn btn-primary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)"
+            disabled="@(_isProcessing)"
             @onclick="CallConfirm">
         @if (_isProcessing)
         {
@@ -18,9 +18,11 @@
             <span>Confirm</span>
         }
     </button>
-    <button class="btn btn-secondary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)" 
-            disabled="@(_isProcessing)" 
-            @onclick="CallCancel">Cancel</button>
+    <button class="btn btn-secondary btn-block @(_isProcessing ? Markup.Disabled : string.Empty)"
+            disabled="@(_isProcessing)"
+            @onclick="CallCancel">
+        Cancel
+    </button>
 </div>
 
 @code {
@@ -41,8 +43,12 @@
         StateHasChanged();
 
         var response = await Client.DeleteAsync($"{City.EndPoint}/{Id}");
-        if (response.IsSuccessStatusCode) await ModalInstance.CloseAsync();
-        
+        if (response.IsSuccessStatusCode)
+        {
+            var result = ModalResult.Ok(Id, typeof(Guid));
+            await ModalInstance.CloseAsync(result);
+        }
+
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             ToastService.ShowError("City is not found", Toast.NotFound);

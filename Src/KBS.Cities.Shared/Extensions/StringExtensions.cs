@@ -21,6 +21,10 @@ namespace KBS.Cities.Shared.Extensions
                 var value = prop.GetValue(obj)?
                     .ToString();
 
+                // Variant date formats is a terrible thing...
+                if (prop.PropertyType == typeof(DateTime))
+                    value = $"{prop.GetValue(obj):MM/dd/yyyy}";
+                
                 qs.Append($"{Uri.EscapeDataString(name)}={Uri.EscapeDataString(value)}&");
             }
 

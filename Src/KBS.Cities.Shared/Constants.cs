@@ -18,8 +18,12 @@
             public const string Hub = "https://localhost:5001/hub";
             public const string EndPoint = "api/city";
 
-            public const string Update = "UpdateCities";
-            public const string Updated = "CitiesUpdated";
+            public const string Update = "Update";
+            public const string Updated = "Updated";
+            public const string Delete = "Delete";
+            public const string Deleted = "Deleted";
+            public const string Add = "Add";
+            public const string Added = "Added";
 
             public const string New = "New City";
         }

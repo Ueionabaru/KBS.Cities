@@ -24,12 +24,12 @@ else
 {
     <div class="card">
         <div class="card-header">
-            <h4 class="card-title p-2">Cities</h4>
+            <h5 class="card-title p-1">Cities</h5>
             <div class="row">
-                <div class="col col-lg-6">
-                    <p class="card-description"> Basic table with card </p>
+                <div class="col col-sm-6">
+                    <p class="card-deck"> Basic table with card </p>
                 </div>
-                <div class="col col-lg-6 text-right">
+                <div class="col col-sm-6 text-right">
                     <button type="button" class="btn btn-sm btn-primary btn-create" @onclick="Create"><span class="@OpenIconic.Plus"></span> Create New</button>
                     <button type="button" class="btn btn-sm btn-primary btn-create disabled" disabled @onclick="Create"><span class="oi oi-tags"></span> Filters</button>
                 </div>
@@ -47,25 +47,25 @@ else
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var city in _data.Data)
+                    @foreach (var city in _data.Items)
                     {
-                    <tr>
-                        <td>
-                            @city.Name
-                        </td>
-                        <td width="140">
-                            <span class="@GetPopulationLabelColor(city.Population)">@city.Population</span>
-                        </td>
-                        <td width="120">@city.Established.ToShortDateString()</td>
-                        <td width="100">
-                            <button @onclick="@(async() => await Edit(city.Id, city.Name))" class="btn btn-sm bg-primary-lt">
-                                <span class="@OpenIconic.Pencil"></span>
-                            </button>
-                            <button @onclick="@(async() => await Delete(city.Id, city.Name))" class="btn btn-sm bg-danger-lt">
-                                <span class="@OpenIconic.X"></span>
-                            </button>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>
+                                @city.Name
+                            </td>
+                            <td width="140">
+                                <span class="@GetPopulationLabelColor(city.Population)">@city.Population</span>
+                            </td>
+                            <td width="120">@city.Established.ToShortDateString()</td>
+                            <td width="100">
+                                <button @onclick="@(async() => await Edit(city.Id, city.Name))" class="btn btn-sm bg-primary-lt">
+                                    <span class="@OpenIconic.Pencil"></span>
+                                </button>
+                                <button @onclick="@(async() => await Delete(city.Id, city.Name))" class="btn btn-sm bg-danger-lt">
+                                    <span class="@OpenIconic.X"></span>
+                                </button>
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -73,10 +73,10 @@ else
 
         <div class="card-footer">
             <div class="d-flex row">
-                <div class="col col-xs-4">
+                <div class="col col-4">
                     Page @_data.PageIndex of @_data.TotalPages
                 </div>
-                <div class="col col-xs-8">
+                <div class="col col-8">
                     <ul class="pagination justify-content-end">
                         <li class="page-item @(_data.HasPreviousPage ? string.Empty : Markup.Disabled)">
                             <button class="btn btn-sm page-link" disabled="@(!_data.HasPreviousPage)" @onclick="CallPreviousPage">Previous</button>
@@ -99,7 +99,7 @@ else
 }
 
 @code {
-    private PaginatedDto<CityDto> _data;
+    private PaginatedDto<CityDto, CityPaginationFilterDto> _data;
     private int _index = 1;
     private HubConnection _hub;
 
@@ -126,11 +126,66 @@ else
         _hub = new HubConnectionBuilder()
             .WithUrl(City.Hub)
             .Build();
-        _hub.On(City.Updated, CallLoadPaginated);
+
+        _hub.On<CityDto>(City.Added, OnAdd);
+        _hub.On<CityDto>(City.Updated, OnUpdate);
+        _hub.On<CityDto>(City.Deleted, OnDelete);
+
         await _hub.StartAsync();
     }
 
-    private async Task UpdateCities() => await _hub.SendAsync(City.Update);
+    private async Task Add(CityDto dto) => await _hub.SendAsync(City.Add, dto);
+    private async Task Update(CityDto dto) => await _hub.SendAsync(City.Update, dto);
+    private async Task Delete(CityDto dto) => await _hub.SendAsync(City.Delete, dto);
+
+    private void OnAdd(CityDto dto)
+    {
+        Console.WriteLine(IsAffectedByFilters(dto));
+        if (!IsAffectedByFilters(dto))
+            return;
+
+        CallLoadPaginated();
+    }
+
+    private void OnUpdate(CityDto dto)
+    {
+        if (!IsAffectedByFilters(dto))
+            return;
+
+        var city = _data.Items.SingleOrDefault(c => c.Id == dto.Id);
+        if (city is null) return;
+
+        var i = _data.Items.IndexOf(city);
+        _data.Items[i] = dto;
+
+        StateHasChanged();
+    }
+
+    private void OnDelete(CityDto dto)
+    {
+        if (!IsAffectedByFilters(dto))
+            return;
+
+        if (_data.PageIndex == _data.TotalPages)
+        {
+            var city = _data.Items.SingleOrDefault(c => c.Id == dto.Id);
+
+            if (_data.Items.Count == 1) CallPreviousPage();
+
+            if (city != null)
+                _data.Items.Remove(city);
+            else
+                _data.Items.RemoveAt(0);
+
+            _data.TotalItems--;
+
+            StateHasChanged();
+        }
+        else
+        {
+            CallLoadPaginated();
+        }
+    }
 
     private void CallPreviousPage() => Task.Run(async () => await ChangePage(_index - 1));
     private void CallNextPage() => Task.Run(async () => await ChangePage(_index + 1));
@@ -139,24 +194,30 @@ else
 
     private async Task ChangePage(int index)
     {
-        Console.WriteLine(index);
         _index = index;
         await LoadPaginated();
     }
 
     private async Task LoadPaginated()
     {
-        var queryString = new PaginationFilterDto { PageIndex = _index }.ToQueryString();
+        var queryString = new CityPaginationFilterDto { PageIndex = _index }.ToQueryString();
         var response = await Http.GetAsync($"{City.EndPoint}{queryString}");
-        if (response.IsSuccessStatusCode) _data = await response.Content.ReadFromJsonAsync<PaginatedDto<CityDto>>();
-        else _data ??= new PaginatedDto<CityDto>();
+        if (response.IsSuccessStatusCode) _data = await response.Content.ReadFromJsonAsync<PaginatedDto<CityDto, CityPaginationFilterDto>>();
+        else _data ??= new PaginatedDto<CityDto, CityPaginationFilterDto>();
         StateHasChanged();
     }
 
     private async Task Create()
     {
         var form = Modal.Show<CityModal>(City.New);
-        await PostChange(form);
+        var result = await form.Result;
+
+        if (result.Cancelled) return;
+
+        var dto = (CityDto)result.Data;
+
+        OnAdd(dto);
+        if (IsConnected) await Add(dto);
     }
 
     private async Task Edit(Guid id, string name)
@@ -164,8 +225,15 @@ else
         var parameters = new ModalParameters();
         parameters.Add(nameof(CityDto.Id), id);
 
-        var form = Modal.Show<CityModal>(name, parameters);
-        await PostChange(form);
+        var form = Modal.Show<CityModal>(City.New, parameters);
+        var result = await form.Result;
+
+        if (result.Cancelled) return;
+
+        var dto = (CityDto)result.Data;
+
+        OnUpdate(dto);
+        if (IsConnected) await Update(dto);
     }
 
     private async Task Delete(Guid id, string name)
@@ -174,31 +242,37 @@ else
         parameters.Add(nameof(CityDto.Id), id);
 
         var form = Modal.Show<DeleteConfirmationModal>($"Delete {name}", parameters);
-        await PostChange(form);
-    }
-
-    private async Task PostChange(IModalReference form)
-    {
         var result = await form.Result;
-        if (IsConnected && !result.Cancelled)
-        {
-            await UpdateCities();
-            ToastService.ShowSuccess(Toast.Ok);
-        }
+
+        if (result.Cancelled) return;
+
+        var dto = _data.Items.Single(c => c.Id == id);
+
+        OnDelete(dto);
+        if (IsConnected) await Delete(dto);
     }
 
     private string GetPopulationLabelColor(int population)
     {
         if (population.LessThan(Small))
             return Bootstrap.Badge.HoverableSecondary;
-        else if (population.LessThan(Medium))
+        if (population.LessThan(Medium))
             return Bootstrap.Badge.HoverablePrimary;
-        else if (population.LessThan(Large))
+        if (population.LessThan(Large))
             return Bootstrap.Badge.HoverableInfo;
 
         return population.LessThan(Largest)
             ? Bootstrap.Badge.HoverableSuccess
             : Bootstrap.Badge.HoverableWarning;
+    }
+
+    private bool IsAffectedByFilters(CityDto dto)
+    {
+        var filter = _data.Filter ?? new CityPaginationFilterDto();
+
+        return filter.PopulationFrom <= dto.Population && filter.PopulationTo >= dto.Population &&
+           filter.DateFrom <= dto.Established && filter.DateTo >= dto.Established &&
+           dto.Name.Contains(filter.Name ?? string.Empty);
     }
 
     public async ValueTask DisposeAsync() => await _hub.DisposeAsync();

@@ -15,7 +15,7 @@ namespace KBS.Cities.Application.Validators
                 .GreaterThanOrEqualTo(0).WithMessage("Population count can't be less than zero.").OverridePropertyName("population");
 
             RuleFor(d => d.Data.Established.Date)
-                .LessThanOrEqualTo(DateTime.Today).WithMessage("Established date cannot be in the future").OverridePropertyName("established");
+                .LessThanOrEqualTo(DateTime.Today.Date).WithMessage("Established date cannot be in the future").OverridePropertyName("established");
         }
     }
 }

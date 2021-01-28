@@ -41,8 +41,8 @@ namespace KBS.Cities.API.Controllers
                 Id = Guid.Empty,
                 Data = dto
             };
-            await _mediator.Send(request);
-            return NoContent();
+            var result = await _mediator.Send(request);
+            return Ok(result);
         }
 
         [HttpPut, Route("{id}")]
@@ -53,8 +53,8 @@ namespace KBS.Cities.API.Controllers
                 Id = id,
                 Data = dto
             };
-            await _mediator.Send(request);
-            return NoContent();
+            var result = await _mediator.Send(request);
+            return Ok(result);
         }
 
         [HttpDelete, Route("{id}")]

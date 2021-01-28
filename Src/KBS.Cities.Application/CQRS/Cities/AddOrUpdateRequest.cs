@@ -11,12 +11,12 @@ using AutoMapper;
 
 namespace KBS.Cities.Application.CQRS.Cities
 {
-    public class AddOrUpdateRequest : IRequest
+    public class AddOrUpdateRequest : IRequest<CityDto>
     {
         public Guid Id { get; set; }
         public CityEditDto Data { get; set; }
 
-        public class AddOrUpdateRequestHandler : IRequestHandler<AddOrUpdateRequest>
+        public class AddOrUpdateRequestHandler : IRequestHandler<AddOrUpdateRequest, CityDto>
         {
             private readonly IDbContext _appDbContext;
             private readonly IMapper _mapper;
@@ -27,15 +27,14 @@ namespace KBS.Cities.Application.CQRS.Cities
                 _mapper = mapper;
             }
 
-            public async Task<Unit> Handle(AddOrUpdateRequest request, CancellationToken cancellationToken = default)
+            public async Task<CityDto> Handle(AddOrUpdateRequest request, CancellationToken cancellationToken = default)
             {
                 var cities = _appDbContext.Set<City>();
                 var city = await cities.SingleOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
                 if (city is null && request.Id != Guid.Empty)
                     throw new NotFoundException($"City with id {request.Id} not found.");
 
-                city ??= new City();
-                city = _mapper.Map<City>(request.Data);
+                city = _mapper.Map(request.Data, city);
                 if (request.Id == Guid.Empty)
                 {
                     cities.Add(city);
@@ -47,7 +46,7 @@ namespace KBS.Cities.Application.CQRS.Cities
                     await _appDbContext.SaveChangesAsync(cancellationToken);
                 }
                 
-                return default;
+                return _mapper.Map<CityDto>(city);
             }
         }
     }
